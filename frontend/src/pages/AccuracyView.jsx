@@ -9,7 +9,9 @@ import {
   HelpCircle,
   CheckCircle,
   Sliders,
-  Calendar
+  Calendar,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import { 
@@ -44,11 +46,11 @@ export default function AccuracyView({ onNavigate }) {
   const overall = accuracyData?.overall || {};
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
       {/* Control Toolbar */}
       <div className="toolbar">
         <div className="toolbar-group">
-          <Target size={18} style={{ color: 'var(--accent-primary)' }} />
+          <Target size={16} style={{ color: 'var(--accent-primary-light)' }} />
           <span className="toolbar-label">Evaluation Horizon:</span>
           <div className="toggle-group">
             <button 
@@ -74,11 +76,11 @@ export default function AccuracyView({ onNavigate }) {
 
         <div className="toolbar-group">
           <span className="badge badge-info">
-            Evaluated Interval: 1 - 31 January 2026 (744 Hours)
+            Evaluation: 1 - 31 Jan 2026 (744 Hours)
           </span>
           <button className="btn btn-primary btn-sm" onClick={() => onNavigate('hedging')}>
             <Sliders size={14} />
-            <span>Open Hedging Calculator</span>
+            <span>Hedging Calculator</span>
           </button>
         </div>
       </div>
@@ -93,6 +95,7 @@ export default function AccuracyView({ onNavigate }) {
           badgeText={`nRMSE: ${overall.nrmsePercent || 22.6}%`}
           badgeType="positive"
           subtext="Average magnitude of forecast deviation"
+          highlight={true}
         />
         <StatsCard 
           label="Root Mean Square Error (RMSE)"
@@ -122,26 +125,35 @@ export default function AccuracyView({ onNavigate }) {
         />
       </div>
 
-      {/* Analytical Insight Banner */}
-      <div style={{ 
-        background: 'rgba(59, 130, 246, 0.08)', 
-        border: '1px solid rgba(59, 130, 246, 0.25)', 
-        borderRadius: 'var(--radius-md)', 
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 14
-      }}>
-        <AlertCircle size={20} style={{ color: '#60a5fa', flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <h4 style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-            Quantitative Desk Findings for January 2026 Procurement:
-          </h4>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            1. <strong>Systemic Positive Bias:</strong> The Elexon WINDFOR day-ahead model over-forecasted wind generation by an average of <strong>+{overall.bias?.toLocaleString()} MW</strong> across January 2026. Unhedged traders buying only the residual power faced substantial imbalance penalties during wind calm periods.<br/>
-            2. <strong>Lead Time Decay:</strong> Forecast MAE improves from ~2,300 MW at 24h lead down to 1,799 MW near gate closure—a 22% reduction in uncertainty. Intraday rebalancing delivers massive cost savings.<br/>
-            3. <strong>P90 Shortfall Buffer:</strong> To protect against 90% of wind generation deficits, a <strong>+{overall.hedgingBufferMW?.p90?.toLocaleString()} MW</strong> reserve margin should be retained.
-          </p>
+      {/* REint Model Signal & Desk Findings Box */}
+      <div className="model-signal-box" style={{ padding: '20px 24px' }}>
+        <div className="eyebrow" style={{ color: 'var(--accent-primary-light)', marginBottom: 6 }}>
+          Model Signal • Empirical Findings (January 2026)
+        </div>
+        <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: 10 }}>
+          Three Key Quantitative Conclusions for UK Day-Ahead Procurement:
+        </h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          <div style={{ borderLeft: '2px solid var(--accent-amber)', paddingLeft: 12 }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-amber)', textTransform: 'uppercase' }}>1. Systemic Over-Forecast Bias</div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+              The Elexon WINDFOR day-ahead model over-forecasted by an average of <strong style={{ color: 'var(--text-primary)' }}>+{overall.bias?.toLocaleString()} MW</strong> across January 2026. Unhedged procurement results in regular shortfalls.
+            </p>
+          </div>
+
+          <div style={{ borderLeft: '2px solid var(--accent-cyan)', paddingLeft: 12 }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-cyan)', textTransform: 'uppercase' }}>2. Lead-Time Uncertainty Decay</div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+              Forecast MAE drops from 2,308 MW at 24h lead down to 1,799 MW near gate closure—a <strong style={{ color: 'var(--text-primary)' }}>22% error reduction</strong>. Active intraday adjustment yields significant risk reduction.
+            </p>
+          </div>
+
+          <div style={{ borderLeft: '2px solid var(--accent-primary-light)', paddingLeft: 12 }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--accent-primary-light)', textTransform: 'uppercase' }}>3. P90 Hedging Margin</div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.5 }}>
+              Procuring an additional <strong style={{ color: 'var(--text-primary)' }}>+{overall.hedgingBufferMW?.p90?.toLocaleString()} MW</strong> reserve buffer covers 90% of empirical wind drop scenarios under BSC imbalance rules.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -150,12 +162,15 @@ export default function AccuracyView({ onNavigate }) {
         <div className="card">
           <div className="card-header">
             <div>
+              <div className="eyebrow" style={{ color: 'var(--accent-primary-light)' }}>
+                Decay Curve
+              </div>
               <div className="card-title">
                 <BarChart3 size={18} />
                 <span>Error vs. Forecast Horizon (Lead Time)</span>
               </div>
               <div className="card-subtitle">
-                How does forecast accuracy improve as delivery approaches?
+                Demonstrates how uncertainty drops as gate closure approaches (24h lead vs 0-4h intraday).
               </div>
             </div>
           </div>
@@ -165,12 +180,15 @@ export default function AccuracyView({ onNavigate }) {
         <div className="card">
           <div className="card-header">
             <div>
+              <div className="eyebrow" style={{ color: 'var(--accent-cyan)' }}>
+                Diurnal Rhythm
+              </div>
               <div className="card-title">
                 <Compass size={18} />
                 <span>Diurnal Error Profile by Hour of Day (UTC)</span>
               </div>
               <div className="card-subtitle">
-                Diurnal error profile (00:00 to 23:00) showing MAE and Bias.
+                24-hour cycle (00:00 to 23:00) comparing MAE and Directional Bias across settlement blocks.
               </div>
             </div>
           </div>
@@ -183,12 +201,15 @@ export default function AccuracyView({ onNavigate }) {
         <div className="card">
           <div className="card-header">
             <div>
+              <div className="eyebrow" style={{ color: 'var(--text-muted)' }}>
+                Time-Series Volatility
+              </div>
               <div className="card-title">
                 <TrendingUp size={18} />
-                <span>Daily MAE & Max Error Spike (January 2026)</span>
+                <span>Daily MAE Trend Across January 2026</span>
               </div>
               <div className="card-subtitle">
-                Identifies high-volatility storm days vs calm steady intervals.
+                Isolates high-variability winter storm periods vs steady high-pressure meteorological blocks.
               </div>
             </div>
           </div>
@@ -198,12 +219,15 @@ export default function AccuracyView({ onNavigate }) {
         <div className="card">
           <div className="card-header">
             <div>
+              <div className="eyebrow" style={{ color: 'var(--text-muted)' }}>
+                Correlation Dynamics
+              </div>
               <div className="card-title">
                 <Target size={18} />
                 <span>Forecast vs. Actual Correlation Scatter</span>
               </div>
               <div className="card-subtitle">
-                Points above the 1:1 line denote over-forecasting; points below denote under-forecasting.
+                744 matched hourly periods. Points above 1:1 diagonal highlight over-forecasting.
               </div>
             </div>
           </div>

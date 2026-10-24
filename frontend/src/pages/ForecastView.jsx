@@ -8,11 +8,14 @@ import {
   GitCommit, 
   Activity,
   ArrowUpDown,
-  Download
+  Download,
+  ArrowUp
 } from 'lucide-react';
 import WindChart from '../components/WindChart';
 import EvolutionChart from '../components/EvolutionChart';
 import StatsCard from '../components/StatsCard';
+import CustomDateDropdown from '../components/CustomDateDropdown';
+import CustomTimeDropdown from '../components/CustomTimeDropdown';
 import { fetchForecasts, fetchActuals, fetchForecastEvolution, fetchAccuracy } from '../api/client';
 
 export default function ForecastView({ 
@@ -27,7 +30,7 @@ export default function ForecastView({
   const [forecastData, setForecastData] = useState(null);
   const [evolutionData, setEvolutionData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [rmseVal, setRmseVal] = useState(2600);
+  const [rmseVal, setRmseVal] = useState(2617);
 
   // Load forecast and actuals for selected date
   useEffect(() => {
@@ -45,7 +48,7 @@ export default function ForecastView({
           aRes.records.forEach((r) => { actualMap[r.startTime] = r.generation; });
         }
 
-        const currentRmse = accRes?.overall?.rmse || 2600;
+        const currentRmse = accRes?.overall?.rmse || 2617;
         setRmseVal(currentRmse);
 
         const merged = (fRes.records || []).map((r, idx) => {
@@ -98,32 +101,30 @@ export default function ForecastView({
   const summary = forecastData?.summary || {};
   const currentSelectedRecord = forecastData?.mergedRecords?.find((r) => r.startTime === selectedHour);
 
+  const handleSelectHour = (startTime) => {
+    setSelectedHour(startTime);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
       {/* Control Toolbar */}
       <div className="toolbar">
         <div className="toolbar-group">
-          <Calendar size={18} style={{ color: 'var(--accent-primary)' }} />
           <span className="toolbar-label">Target Day:</span>
-          <select 
-            className="select-input"
+          <CustomDateDropdown
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          >
-            {availableDates.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+            onChange={(d) => setSelectedDate(d)}
+            options={availableDates}
+          />
 
-          <span className="toolbar-label" style={{ marginLeft: 10 }}>Market Mode:</span>
+          <span className="toolbar-label" style={{ marginLeft: 8 }}>Auction Horizon:</span>
           <div className="toggle-group">
             <button 
               className={`toggle-btn ${mode === 'day_ahead' ? 'active' : ''}`}
               onClick={() => setMode('day_ahead')}
             >
-              Day-Ahead Auction (11:00 D-1)
+              Day-Ahead (11:00 D-1)
             </button>
             <button 
               className={`toggle-btn ${mode === 'latest' ? 'active' : ''}`}
@@ -140,7 +141,7 @@ export default function ForecastView({
               type="checkbox" 
               checked={showActuals} 
               onChange={(e) => setShowActuals(e.target.checked)} 
-              style={{ accentColor: 'var(--accent-primary)' }}
+              style={{ accentColor: 'var(--accent-primary-light)' }}
             />
             Overlay Actuals (FUELHH)
           </label>
@@ -150,7 +151,7 @@ export default function ForecastView({
               type="checkbox" 
               checked={showConfidence} 
               onChange={(e) => setShowConfidence(e.target.checked)} 
-              style={{ accentColor: 'var(--accent-primary)' }}
+              style={{ accentColor: 'var(--accent-primary-light)' }}
             />
             ±1 RMSE Margin ({rmseVal.toLocaleString()} MW)
           </label>
@@ -167,6 +168,7 @@ export default function ForecastView({
           badgeText={mode === 'day_ahead' ? 'Day-Ahead Gate' : 'Intraday'}
           badgeType="positive"
           subtext="Maximum hourly output"
+          highlight={true}
         />
         <StatsCard 
           label="Minimum Trough Output"
@@ -201,18 +203,21 @@ export default function ForecastView({
       <div className="card">
         <div className="card-header">
           <div>
+            <div className="eyebrow" style={{ color: 'var(--accent-primary-light)' }}>
+              Generation Telemetry Curve
+            </div>
             <div className="card-title">
-              <Wind size={20} />
-              <span>Wind Generation Trajectory — {selectedDate}</span>
+              <Wind size={18} />
+              <span>Wind Generation Profile — {selectedDate}</span>
             </div>
             <div className="card-subtitle">
-              Click any hour data point on the chart to analyze its multi-publish forecast revision history below.
+              Click any hour data point on the chart to inspect its multi-publish forecast revision history below.
             </div>
           </div>
 
           {selectedHour && (
             <span className="badge badge-positive">
-              Selected Hour: {selectedHour.slice(11, 16)} UTC
+              Inspecting: {selectedHour.slice(11, 16)} UTC
             </span>
           )}
         </div>
@@ -227,31 +232,28 @@ export default function ForecastView({
       </div>
 
       {/* Forecast Evolution Panel (Multi-publish tracking) */}
-      <div className="card" style={{ border: '1px solid var(--border-accent)' }}>
+      <div className="card" style={{ border: '1px solid var(--border-accent)', background: 'var(--bg-card)' }}>
         <div className="card-header">
           <div>
+            <div className="eyebrow" style={{ color: 'var(--accent-primary-light)' }}>
+              Forecast Convergence
+            </div>
             <div className="card-title">
-              <GitCommit size={20} style={{ color: 'var(--accent-primary)' }} />
+              <GitCommit size={18} />
               <span>Forecast Evolution & Staleness Analysis ({selectedHour.slice(11, 16)} UTC)</span>
             </div>
             <div className="card-subtitle">
-              How did the National Grid / Elexon forecast for this specific delivery hour change as delivery approached?
+              Inspect how the National Grid / Elexon model for this delivery slot evolved as new weather runs arrived.
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Target Delivery Hour:</span>
-            <select 
-              className="select-input"
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Delivery Slot:</span>
+            <CustomTimeDropdown
               value={selectedHour}
-              onChange={(e) => setSelectedHour(e.target.value)}
-            >
-              {(forecastData?.mergedRecords || []).map((r) => (
-                <option key={r.startTime} value={r.startTime}>
-                  {r.startTime.slice(11, 16)} UTC ({r.forecast?.toLocaleString()} MW)
-                </option>
-              ))}
-            </select>
+              onChange={(hr) => setSelectedHour(hr)}
+              options={forecastData?.mergedRecords || []}
+            />
           </div>
         </div>
 
@@ -265,13 +267,28 @@ export default function ForecastView({
       {/* Tabular Breakdown */}
       <div className="card">
         <div className="card-header">
-          <div className="card-title">
-            <Layers size={18} />
-            <span>Hourly Settlement Period Breakdown</span>
+          <div>
+            <div className="eyebrow" style={{ color: 'var(--text-muted)' }}>
+              Period Ledger
+            </div>
+            <div className="card-title">
+              <Layers size={18} />
+              <span>Hourly Settlement Period Breakdown</span>
+            </div>
+            <div className="card-subtitle">
+              48 Half-Hourly Settlement Periods Aligned to 24 Hourly Wholesale Auction Windows • Click any row to inspect & scroll to top
+            </div>
           </div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            48 Half-Hourly Periods Aligned to 24 Hourly Auction Windows
-          </span>
+
+          <button 
+            className="btn btn-outline btn-sm"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            title="Scroll to top charts"
+          >
+            <ArrowUp size={14} />
+            <span>Scroll to Top</span>
+          </button>
         </div>
 
         <div className="table-wrapper">
@@ -289,27 +306,37 @@ export default function ForecastView({
               </tr>
             </thead>
             <tbody>
-              {(forecastData?.mergedRecords || []).map((row) => (
-                <tr 
-                  key={row.startTime}
-                  style={{
-                    backgroundColor: row.startTime === selectedHour ? 'rgba(0, 229, 163, 0.08)' : 'transparent',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => setSelectedHour(row.startTime)}
-                >
-                  <td style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{row.startTime.slice(11, 16)}</td>
-                  <td>SP {row.settlementPeriod - 1} - {row.settlementPeriod}</td>
-                  <td style={{ color: '#00e5a3', fontWeight: 600 }}>{row.forecast?.toLocaleString()}</td>
-                  <td style={{ color: '#00d2ff' }}>{row.actual !== null ? row.actual.toLocaleString() : '—'}</td>
-                  <td style={{ color: row.variance > 0 ? '#f59e0b' : '#38bdf8' }}>
-                    {row.variance !== null ? (row.variance > 0 ? `+${row.variance.toLocaleString()}` : row.variance.toLocaleString()) : '—'}
-                  </td>
-                  <td>{row.pctError !== null ? `${row.pctError}%` : '—'}</td>
-                  <td>{row.horizonHours} hrs</td>
-                  <td style={{ color: 'var(--text-muted)' }}>{row.publishTime?.slice(5, 16).replace('T', ' ')}</td>
-                </tr>
-              ))}
+              {(forecastData?.mergedRecords || []).map((row) => {
+                const isSelected = row.startTime === selectedHour;
+                return (
+                  <tr 
+                    key={row.startTime}
+                    className={isSelected ? 'active' : ''}
+                    onClick={() => handleSelectHour(row.startTime)}
+                    title="Click to inspect this settlement hour and scroll to chart"
+                  >
+                    <td style={{ color: isSelected ? '#15803d' : 'var(--text-heading)', fontWeight: isSelected ? 700 : 600 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                        {isSelected ? (
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#16a34a', display: 'inline-block', flexShrink: 0 }}></span>
+                        ) : (
+                          <span style={{ width: 6, height: 6, display: 'inline-block', flexShrink: 0 }}></span>
+                        )}
+                        <span>{row.startTime.slice(11, 16)}</span>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>SP {row.settlementPeriod - 1} - {row.settlementPeriod}</td>
+                    <td style={{ color: 'var(--accent-primary-light)', fontWeight: 600 }}>{row.forecast?.toLocaleString()}</td>
+                    <td style={{ color: 'var(--accent-cyan)' }}>{row.actual !== null ? row.actual.toLocaleString() : '—'}</td>
+                    <td style={{ color: row.variance > 0 ? 'var(--accent-amber)' : 'var(--accent-cyan)' }}>
+                      {row.variance !== null ? (row.variance > 0 ? `+${row.variance.toLocaleString()}` : row.variance.toLocaleString()) : '—'}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{row.pctError !== null ? `${row.pctError}%` : '—'}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{row.horizonHours} hrs</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{row.publishTime?.slice(5, 16).replace('T', ' ')}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

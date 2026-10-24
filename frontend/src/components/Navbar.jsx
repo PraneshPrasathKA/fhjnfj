@@ -5,8 +5,8 @@ import {
   TrendingUp, 
   ShieldCheck, 
   Code2, 
-  Database,
-  Radio
+  Activity,
+  Layers
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenTechReview, systemStatus }) {
@@ -20,12 +20,12 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTechReview, syst
   return (
     <header className="navbar">
       <div className="nav-brand" onClick={() => setActiveTab('dashboard')}>
-        <div className="brand-icon">
-          <Wind size={22} />
-        </div>
+        <Wind size={28} style={{ color: 'var(--accent-primary-light)', flexShrink: 0 }} />
         <div className="brand-text">
-          <h1>AuraWind Intelligence</h1>
-          <p>UK Wholesale Day-Ahead Procurement Desk</p>
+          <h1>
+            AuraWind <span className="brand-accent">Intelligence</span>
+          </h1>
+          <p>UK Wholesale Day-Ahead Decision Platform • GridBricks Powered</p>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTechReview, syst
               className={`nav-tab-btn ${isActive ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <Icon size={16} />
+              <Icon size={14} />
               <span>{tab.label}</span>
             </button>
           );
@@ -47,19 +47,19 @@ export default function Navbar({ activeTab, setActiveTab, onOpenTechReview, syst
       </nav>
 
       <div className="nav-actions">
-        <div className="status-badge" title="Connected to Elexon BMRS Datasets (FUELHH & WINDFOR)">
+        <div className="status-badge" title="Live streaming from Elexon BMRS Datasets (FUELHH & WINDFOR)">
           <div className="status-dot"></div>
-          <span>BMRS Live</span>
-          <span style={{ opacity: 0.6 }}>|</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem' }}>Jan 2026</span>
+          <span style={{ fontWeight: 600 }}>BMRS STREAM</span>
+          <span style={{ opacity: 0.4 }}>|</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>JAN 2026</span>
         </div>
 
         <button 
-          className="btn btn-outline btn-sm"
+          className="btn btn-primary btn-sm"
           onClick={onOpenTechReview}
           title="Review Software Design, Data Pipeline & Architecture"
         >
-          <Code2 size={15} />
+          <Code2 size={14} />
           <span>Tech Review</span>
         </button>
       </div>

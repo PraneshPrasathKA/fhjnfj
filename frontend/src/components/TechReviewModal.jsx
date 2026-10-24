@@ -6,14 +6,15 @@ export default function TechReviewModal({ isOpen, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close Modal">
-          <X size={20} />
-        </button>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}
+        style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}
+      >
 
+        <div style={{ overflowY: 'auto', overflowX: 'hidden', flex: 1, paddingRight: 4,
+          scrollbarWidth: 'thin', scrollbarColor: '#d1d5db transparent' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <div className="brand-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.4)' }}>
-            <Code2 size={22} style={{ color: '#60a5fa' }} />
+          <div className="brand-icon" style={{ background: 'rgba(20, 137, 55, 0.15)', borderColor: 'rgba(20, 137, 55, 0.4)' }}>
+            <Code2 size={22} style={{ color: 'var(--accent-primary-light)' }} />
           </div>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -35,26 +36,75 @@ export default function TechReviewModal({ isOpen, onClose }) {
             <p style={{ marginBottom: 10, lineHeight: 1.6 }}>
               The solution follows a decoupled, resilient micro-architecture designed for low latency (&lt;20ms) and operational reliability:
             </p>
-            <div style={{ background: 'var(--bg-input)', padding: 14, borderRadius: 8, fontFamily: 'var(--font-mono)', fontSize: '0.78rem', border: '1px solid var(--border-light)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
-{`┌────────────────────────────────────────────────────────┐
-│               Browser Frontend (React + Vite)          │
-│   • Recharts for high-density time-series & scatter    │
-│   • Dark trading terminal design system with CSS vars  │
-│   • Dynamic hedging buffer risk calculator             │
-└───────────────────────────┬────────────────────────────┘
-                            │ REST / JSON (sub-25ms)
-┌───────────────────────────▼────────────────────────────┐
-│               FastAPI Backend (Python 3.11/3.13)       │
-│   • Routers: /api/forecast, /api/actuals, /api/accuracy│
-│   • Analytic Engine: MAE, RMSE, MAPE, Bias, Quantiles  │
-│   • Gate-Closure & Horizon simulation logic            │
-└──────────────┬────────────────────────────┬────────────┘
-               │ Local Query                │ Sync / Hydrate
-┌──────────────▼─────────────┐ ┌────────────▼────────────┐
-│ SQLite Persistent Cache    │ │ Elexon BMRS Public API  │
-│ (1,513 actuals, 19k fcasts)│ │ • FUELHH (Half-hourly)  │
-│ Instant response & offline │ │ • WINDFOR (Multi-lead)  │
-└────────────────────────────┘ └─────────────────────────┘`}
+            <div className="arch-diagram-container">
+              {/* Layer 1: Frontend */}
+              <div className="arch-box arch-box-frontend">
+                <div className="arch-box-header">
+                  <strong className="arch-title">Browser Frontend (React 18 + Vite)</strong>
+                  <span className="arch-badge">Client Layer</span>
+                </div>
+                <ul className="arch-list">
+                  <li>Recharts for high-density time-series, distribution & scatter telemetry</li>
+                  <li>Responsive trading terminal design system with CSS custom tokens</li>
+                  <li>Dynamic hedging buffer & downside shortfall risk calculator</li>
+                </ul>
+              </div>
+
+              {/* Connector: REST */}
+              <div className="arch-connector">
+                <span className="arch-connector-label">REST / JSON (sub-25ms)</span>
+                <div className="arch-arrow-down">▼</div>
+              </div>
+
+              {/* Layer 2: Backend */}
+              <div className="arch-box arch-box-backend">
+                <div className="arch-box-header">
+                  <strong className="arch-title">FastAPI Backend (Python 3.11 / 3.13)</strong>
+                  <span className="arch-badge arch-badge-backend">Service Layer</span>
+                </div>
+                <ul className="arch-list">
+                  <li>Routers: <code>/api/forecast</code>, <code>/api/actuals</code>, <code>/api/accuracy</code>, <code>/api/hedging</code></li>
+                  <li>Analytic Engine: MAE, RMSE, MAPE, Directional Bias, Empirical Quantiles</li>
+                  <li>Gate-Closure (11:00 D-1) & Horizon multi-publish backtesting logic</li>
+                </ul>
+              </div>
+
+              {/* Connector: Split Down */}
+              <div className="arch-split-connectors">
+                <div className="arch-connector-half">
+                  <span className="arch-connector-label">Local Query</span>
+                  <div className="arch-arrow-down">▼</div>
+                </div>
+                <div className="arch-connector-half">
+                  <span className="arch-connector-label">Sync / Hydrate</span>
+                  <div className="arch-arrow-down">▼</div>
+                </div>
+              </div>
+
+              {/* Layer 3: Persistence & Upstream API */}
+              <div className="arch-bottom-row">
+                <div className="arch-box arch-box-db">
+                  <div className="arch-box-header">
+                    <strong className="arch-title">SQLite Persistent Cache</strong>
+                    <span className="arch-badge arch-badge-db">Storage</span>
+                  </div>
+                  <ul className="arch-list">
+                    <li>1,513 actuals, 19k forecast revisions</li>
+                    <li>Instant sub-millisecond local response & offline mode</li>
+                  </ul>
+                </div>
+
+                <div className="arch-box arch-box-api">
+                  <div className="arch-box-header">
+                    <strong className="arch-title">Elexon BMRS Public API</strong>
+                    <span className="arch-badge arch-badge-api">Upstream</span>
+                  </div>
+                  <ul className="arch-list">
+                    <li><code>FUELHH</code> (30-min settlement actuals)</li>
+                    <li><code>WINDFOR</code> (Multi-publish national wind forecasts)</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -125,7 +175,9 @@ export default function TechReviewModal({ isOpen, onClose }) {
           </section>
         </div>
 
-        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'flex-end' }}>
+        </div>{/* end scrollable */}
+
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--border-light)', display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
           <button className="btn btn-primary" onClick={onClose}>
             Back to Application
           </button>

@@ -9,10 +9,13 @@ import {
   Sliders, 
   Flame,
   CheckCircle2,
-  Clock
+  Clock,
+  Activity,
+  ShieldCheck
 } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import WindChart from '../components/WindChart';
+import CustomDateDropdown from '../components/CustomDateDropdown';
 import { fetchForecasts, fetchActuals, fetchAccuracy } from '../api/client';
 
 export default function Dashboard({ 
@@ -66,141 +69,224 @@ export default function Dashboard({
   // Procurement Gap calculations
   const expectedWindPeak = summary.peakMW || 14000;
   const netThermalGap = Math.max(0, demandEstimate - expectedWindPeak);
-  const recommendedBuffer = overallAcc.hedgingBufferMW?.p90 || 4300;
+  const recommendedBuffer = overallAcc.hedgingBufferMW?.p90 || 4304;
   const totalProcurementNeeded = netThermalGap + recommendedBuffer;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      {/* Top Banner Toolbar */}
-      <div className="toolbar">
-        <div className="toolbar-group">
-          <Calendar size={18} style={{ color: 'var(--accent-primary)' }} />
-          <span className="toolbar-label">Target Delivery Day:</span>
-          <select 
-            className="select-input"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          >
-            {availableDates.map((d) => (
-              <option key={d} value={d}>
-                {d} (Day-Ahead Market)
-              </option>
-            ))}
-          </select>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
+      {/* REint Editorial Hero Header */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+        gap: 20,
+        paddingBottom: 8
+      }}>
+        <div style={{ maxWidth: 760 }}>
+          <div className="eyebrow">Decision Intelligence • UK Wholesale Day-Ahead</div>
+          <h1 style={{ 
+            fontSize: '2.5rem', 
+            fontWeight: 700, 
+            letterSpacing: '-0.03em', 
+            lineHeight: 1.15,
+            color: 'var(--text-heading)'
+          }}>
+            Precision Wind Intelligence for{' '}
+            <span className="editorial-title" style={{ fontSize: '2.9rem', color: '#16a34a' }}>
+              Day-Ahead Power Decisions
+            </span>
+          </h1>
+          <p style={{ 
+            fontSize: '0.92rem', 
+            color: 'var(--text-secondary)', 
+            marginTop: 10, 
+            lineHeight: 1.6,
+            fontWeight: 400 
+          }}>
+            Connecting official Elexon National Grid forecast streams (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)' }}>WINDFOR</span>) 
+            with historical accuracy decay metrics to formulate optimal thermal procurement bids ahead of the 11:00 AM D-1 gate closure.
+          </p>
         </div>
 
-        <div className="toolbar-group">
-          <span className="badge badge-info" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Clock size={12} />
-            Gate Closure: 11:00 AM (D-1) Active
-          </span>
-          <span className="badge badge-positive">
-            National Elexon Model
-          </span>
+        {/* Quick Date & Gate Status Toolbar */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 10, 
+          alignItems: 'flex-end' 
+        }}>
+          <div className="toolbar" style={{ margin: 0, padding: '6px 12px' }}>
+            <div className="toolbar-group">
+              <span className="toolbar-label">Target Day:</span>
+              <CustomDateDropdown
+                value={selectedDate}
+                onChange={(d) => setSelectedDate(d)}
+                options={availableDates}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <span className="badge badge-positive" style={{ gap: 6 }}>
+              <Clock size={12} />
+              Gate Closure: 11:00 AM (D-1)
+            </span>
+            <span className="badge badge-info">
+              January 2026 Evaluated
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Procurement Gap Cockpit Simulator */}
+      {/* REint-Style Split Cockpit Simulator Panel */}
       <div className="simulator-panel">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--accent-primary)' }}>
-              <Zap size={22} />
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Day-Ahead Thermal Procurement Simulator
-              </h2>
+            <div className="eyebrow" style={{ color: 'var(--accent-primary-light)' }}>
+              Interactive Procurement Simulator
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4, maxWidth: 640 }}>
-              To serve utility consumers, adjust your forecasted peak national demand. The model calculates the residual thermal procurement required after wind generation, plus the empirical buffer to shield against forecast error.
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-heading)', letterSpacing: '-0.02em' }}>
+              Day-Ahead Thermal Dispatch & Hedging Engine
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 4, maxWidth: 660 }}>
+              Adjust anticipated national grid demand to compute residual thermal procurement and empirical risk buffers to cover wind generation shortfalls.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-primary btn-sm" onClick={() => onNavigate('hedging')}>
               <Sliders size={14} />
-              <span>Adjust Buffer Risk</span>
+              <span>Full Hedging Suite</span>
             </button>
           </div>
         </div>
 
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: 6 }}>
-            <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
-              Expected Peak Grid Demand:
-            </span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent-cyan)' }}>
-              {demandEstimate.toLocaleString()} MW
-            </span>
-          </div>
-          <input 
-            type="range"
-            min="25000"
-            max="48000"
-            step="500"
-            value={demandEstimate}
-            onChange={(e) => setDemandEstimate(Number(e.target.value))}
-            className="custom-range"
-            style={{ width: '100%' }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            <span>25,000 MW (Low/Mild)</span>
-            <span>38,000 MW (Typical Winter Evening)</span>
-            <span>48,000 MW (Extreme Freeze)</span>
-          </div>
-        </div>
+        {/* Grid: Simulator Inputs + Split Signal / Watchlist Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, marginTop: 22 }}>
+          {/* Left: Input & Demand Presets */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: 'var(--bg-input)', padding: 18, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Expected Peak National Demand
+                </span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: '1.15rem', color: 'var(--text-heading)' }}>
+                  {demandEstimate.toLocaleString()} <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>MW</span>
+                </span>
+              </div>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', 
-          gap: 16, 
-          marginTop: 20,
-          paddingTop: 16,
-          borderTop: '1px solid var(--border-light)'
-        }}>
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Wind Generation Contribution</span>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 700, color: 'var(--accent-primary)', marginTop: 2 }}>
-              {expectedWindPeak.toLocaleString()} <span style={{ fontSize: '0.85rem' }}>MW</span>
+              <input 
+                type="range"
+                min="25000"
+                max="48000"
+                step="500"
+                value={demandEstimate}
+                onChange={(e) => setDemandEstimate(Number(e.target.value))}
+                className="custom-range"
+                style={{ width: '100%' }}
+              />
+
+              {/* Demand Presets */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                {[
+                  { label: 'Mild (28 GW)', val: 28000 },
+                  { label: 'Winter Peak (38 GW)', val: 38000 },
+                  { label: 'Cold Snap (44 GW)', val: 44000 }
+                ].map((preset) => (
+                  <button 
+                    key={preset.val}
+                    onClick={() => setDemandEstimate(preset.val)}
+                    style={{
+                      flex: 1,
+                      padding: '5px 8px',
+                      fontSize: '0.72rem',
+                      fontFamily: 'var(--font-mono)',
+                      background: demandEstimate === preset.val ? 'var(--color-brand)' : 'var(--bg-secondary)',
+                      color: demandEstimate === preset.val ? '#ffffff' : 'var(--text-secondary)',
+                      border: '1px solid ' + (demandEstimate === preset.val ? 'var(--color-brand)' : 'var(--border-light)'),
+                      borderRadius: 'var(--radius-xs)',
+                      cursor: 'pointer',
+                      transition: 'var(--transition)'
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Based on Day-Ahead WINDFOR</span>
+
+            {/* Calculations Row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              <div style={{ background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Forecast Wind</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--accent-primary-light)', marginTop: 2 }}>
+                  {expectedWindPeak.toLocaleString()} <span style={{ fontSize: '0.72rem' }}>MW</span>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Base Gap</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--accent-amber)', marginTop: 2 }}>
+                  {netThermalGap.toLocaleString()} <span style={{ fontSize: '0.72rem' }}>MW</span>
+                </div>
+              </div>
+
+              <div style={{ background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>P90 Buffer</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.15rem', fontWeight: 700, color: 'var(--accent-cyan)', marginTop: 2 }}>
+                  +{recommendedBuffer.toLocaleString()} <span style={{ fontSize: '0.72rem' }}>MW</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Residual Base Gap (Demand - Wind)</span>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 700, color: '#f59e0b', marginTop: 2 }}>
-              {netThermalGap.toLocaleString()} <span style={{ fontSize: '0.85rem' }}>MW</span>
+          {/* Right: REint Model Signal & Watchlist */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* REint Model Signal Card */}
+            <div className="model-signal-box">
+              <div className="eyebrow" style={{ color: 'var(--accent-primary-light)', marginBottom: 4 }}>
+                Model Signal • Procurement Order
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-heading)', marginBottom: 4 }}>
+                Total Recommended Thermal Order: {totalProcurementNeeded.toLocaleString()} MW
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Under current market conditions, dispatching <strong style={{ color: 'var(--text-primary)' }}>{netThermalGap.toLocaleString()} MW</strong> base thermal plus a <strong style={{ color: 'var(--accent-primary-light)' }}>+{recommendedBuffer.toLocaleString()} MW</strong> reserve covers 90% of empirical wind shortfall risk under BSC rules.
+              </p>
             </div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Unbuffered procurement requirement</span>
-          </div>
 
-          <div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Recommended Buffer (+P90 Hedge)</span>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 700, color: '#00d2ff', marginTop: 2 }}>
-              +{recommendedBuffer.toLocaleString()} <span style={{ fontSize: '0.85rem' }}>MW</span>
+            {/* REint Watch List Card */}
+            <div className="watchlist-box">
+              <div className="eyebrow" style={{ color: 'var(--text-muted)', marginBottom: 8 }}>
+                Trader Watch List
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-brand)', marginTop: 5, flexShrink: 0 }}></div>
+                  <span>National model exhibits persistent over-forecast bias (<strong style={{ color: 'var(--text-primary)' }}>+1,840 MW</strong>) across winter months.</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-cyan)', marginTop: 5, flexShrink: 0 }}></div>
+                  <span>Accuracy improves by 22% between Day-Ahead (24h lead) and Intraday Gate Closure.</span>
+                </div>
+              </div>
             </div>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Protects 90% of wind shortfall risk</span>
-          </div>
-
-          <div style={{ background: 'rgba(0, 229, 163, 0.08)', padding: 10, borderRadius: 8, border: '1px solid var(--border-accent)' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, textTransform: 'uppercase' }}>Total Thermal Order Recommendation</span>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.5rem', fontWeight: 800, color: '#ffffff', marginTop: 2 }}>
-              {totalProcurementNeeded.toLocaleString()} <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)' }}>MW</span>
-            </div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Procure in wholesale Day-Ahead auction</span>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards Row */}
+      {/* KPI Cards Row (REint Institutional Metric Style) */}
       <div className="stats-grid">
         <StatsCard 
           label="Peak Wind Forecast"
           value={summary.peakMW?.toLocaleString() || '—'}
           unit="MW"
           icon={Wind}
-          badgeText="Day-Ahead"
+          badgeText="Day-Ahead (D-1)"
           badgeType="positive"
-          subtext="Highest delivery interval"
+          subtext="Highest expected delivery hour"
+          highlight={true}
         />
         <StatsCard 
           label="Average Expected Power"
@@ -209,16 +295,16 @@ export default function Dashboard({
           icon={Zap}
           badgeText="24h Average"
           badgeType="info"
-          subtext="Total: ~276 GWh equivalent"
+          subtext="Day-total: ~276 GWh energy"
         />
         <StatsCard 
           label="Historical Forecast MAE"
-          value={overallAcc.mae?.toLocaleString() || '2,122'}
+          value={overallAcc.mae?.toLocaleString() || '2,123'}
           unit="MW"
           icon={TrendingUp}
           badgeText="Jan 2026 Baseline"
           badgeType="warning"
-          subtext="Mean Absolute Error across month"
+          subtext="Average deviation magnitude"
         />
         <StatsCard 
           label="Systemic Forecast Bias"
@@ -235,18 +321,21 @@ export default function Dashboard({
       <div className="card">
         <div className="card-header">
           <div>
+            <div className="eyebrow" style={{ color: 'var(--accent-primary-light)' }}>
+              Generation Telemetry
+            </div>
             <div className="card-title">
-              <Wind size={20} />
-              <span>Day-Ahead Generation Profile for {selectedDate}</span>
+              <Wind size={18} />
+              <span>Day-Ahead Generation Trajectory for {selectedDate}</span>
             </div>
             <div className="card-subtitle">
-              Forecasted Wind Generation curve (WINDFOR) with historical ±1 RMSE confidence band and actual delivery overlay.
+              Official WINDFOR hourly forecast stream with empirical ±1 RMSE uncertainty corridor ({overallAcc.rmse || 2617} MW spread) and actual delivery overlay.
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button className="btn btn-outline btn-sm" onClick={() => onNavigate('forecast')}>
-              <span>Detailed Explorer</span>
+              <span>Open Detailed Explorer</span>
               <ArrowRight size={14} />
             </button>
           </div>

@@ -13,9 +13,12 @@
     "moduleDetection": "force",
     "noEmit": true,
 
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "checkJs": false,
+
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"]

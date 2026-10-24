@@ -88,16 +88,16 @@ export default function App() {
       </main>
 
       <footer style={{ 
-        borderTop: '1px solid var(--border-light)', 
-        padding: '16px 28px', 
-        fontSize: '0.78rem', 
+        borderTop: '1px solid var(--border-hairline)', 
+        padding: '14px 28px', 
+        fontSize: '0.75rem', 
         color: 'var(--text-muted)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: 12,
-        background: 'rgba(15, 22, 38, 0.4)'
+        background: 'var(--bg-secondary)'
       }}>
         <div>
           <span>AuraWind Intelligence v1.0 • UK Day-Ahead Procurement Desk</span>
@@ -106,7 +106,7 @@ export default function App() {
         </div>
 
         <div>
-          <span>Built with the assistance of <strong>Antigravity</strong> (Google DeepMind AI Assistant)</span>
+          <span>Built by <strong>Pranesh Prasath K A</strong></span>
         </div>
       </footer>
 

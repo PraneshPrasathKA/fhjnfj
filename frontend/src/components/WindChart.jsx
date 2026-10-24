@@ -18,22 +18,24 @@ function CustomTooltip({ active, payload, label }) {
   const data = payload[0]?.payload;
   const forecast = data?.forecast;
   const actual = data?.actual;
-  const variance = actual !== undefined && forecast !== undefined ? round(forecast - actual, 1) : null;
+  const variance = actual !== undefined && actual !== null && forecast !== undefined && forecast !== null
+    ? round(forecast - actual, 1)
+    : null;
 
   return (
     <div className="chart-tooltip">
-      <div className="chart-tooltip-title">{label} UTC</div>
-      
-      {forecast !== undefined && (
+      <div className="chart-tooltip-title">{label} UTC (Settlement Window)</div>
+
+      {forecast !== undefined && forecast !== null && (
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label" style={{ color: '#00e5a3' }}>● Forecast:</span>
+          <span className="chart-tooltip-label" style={{ color: '#16a34a' }}>● WINDFOR Forecast:</span>
           <span className="chart-tooltip-value">{forecast.toLocaleString()} MW</span>
         </div>
       )}
 
-      {actual !== undefined && (
+      {actual !== undefined && actual !== null && (
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label" style={{ color: '#00d2ff' }}>● Actual Generation:</span>
+          <span className="chart-tooltip-label" style={{ color: '#0284c7' }}>● FUELHH Actual:</span>
           <span className="chart-tooltip-value">{actual.toLocaleString()} MW</span>
         </div>
       )}
@@ -41,26 +43,26 @@ function CustomTooltip({ active, payload, label }) {
       {variance !== null && (
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-label">Variance (F - A):</span>
-          <span 
-            className="chart-tooltip-value" 
-            style={{ color: variance > 0 ? '#f59e0b' : '#38bdf8' }}
+          <span
+            className="chart-tooltip-value"
+            style={{ color: variance > 0 ? '#d97706' : '#0284c7' }}
           >
-            {variance > 0 ? `+${variance}` : variance} MW
+            {variance > 0 ? `+${variance.toLocaleString()}` : variance.toLocaleString()} MW
           </span>
         </div>
       )}
 
       {data?.confidenceHigh !== undefined && (
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label">±1 RMSE Range:</span>
-          <span className="chart-tooltip-value" style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+          <span className="chart-tooltip-label">±1 RMSE Corridor:</span>
+          <span className="chart-tooltip-value" style={{ fontSize: '0.73rem', opacity: 0.85 }}>
             {data.confidenceLow?.toLocaleString()} – {data.confidenceHigh?.toLocaleString()} MW
           </span>
         </div>
       )}
 
       {data?.publishTime && (
-        <div className="chart-tooltip-row" style={{ marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 4 }}>
+        <div className="chart-tooltip-row" style={{ marginTop: 6, borderTop: '1px solid #e5e7eb', paddingTop: 5 }}>
           <span className="chart-tooltip-label">Published At:</span>
           <span className="chart-tooltip-value" style={{ fontSize: '0.72rem' }}>
             {data.publishTime.replace('T', ' ').replace(':00Z', '')}
@@ -76,27 +78,33 @@ function round(val, dec = 1) {
   return Number(val.toFixed(dec));
 }
 
-export default function WindChart({ 
-  data = [], 
-  showActuals = true, 
-  showConfidence = true, 
+const LEGEND_STYLE = {
+  fontSize: '0.76rem',
+  paddingTop: 14,
+  fontFamily: 'var(--font-sans)',
+  color: '#6b7280'
+};
+
+export default function WindChart({
+  data = [],
+  showActuals = true,
+  showConfidence = true,
   onSelectHour = null,
-  selectedHour = null 
+  selectedHour = null
 }) {
   if (!data || data.length === 0) {
     return (
-      <div style={{ height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+      <div style={{ height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
         No chart data available for the selected criteria.
       </div>
     );
   }
 
-  // Format data for Recharts
   const chartData = data.map((d) => {
     const timeLabel = d.startTime ? d.startTime.slice(11, 16) : '';
     const forecastVal = d.forecast !== undefined ? d.forecast : (d.generation !== undefined ? d.generation : null);
     const actualVal = d.actual;
-    const rmse = d.rmseMargin || 2400; // default historical Jan 2026 RMSE
+    const rmse = d.rmseMargin || 2617;
 
     return {
       ...d,
@@ -105,8 +113,6 @@ export default function WindChart({
       actual: actualVal,
       confidenceHigh: forecastVal !== null ? Math.round(forecastVal + rmse) : null,
       confidenceLow: forecastVal !== null ? Math.max(0, Math.round(forecastVal - rmse)) : null,
-      // For stacked area or range
-      confidenceBand: forecastVal !== null ? [Math.max(0, Math.round(forecastVal - rmse)), Math.round(forecastVal + rmse)] : null
     };
   });
 
@@ -115,91 +121,118 @@ export default function WindChart({
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart
           data={chartData}
-          margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+          margin={{ top: 14, right: 24, left: 14, bottom: 0 }}
           onClick={(e) => {
             if (e && e.activePayload && e.activePayload[0] && onSelectHour) {
-              onSelectHour(e.activePayload[0].payload.startTime);
+              const clickedStartTime = e.activePayload[0].payload.startTime;
+              onSelectHour(clickedStartTime);
             }
           }}
         >
           <defs>
-            <linearGradient id="forecastAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#00e5a3" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#00e5a3" stopOpacity={0.0} />
+            {/* Confidence band — soft green wash */}
+            <linearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#16a34a" stopOpacity={0.20} />
+              <stop offset="100%" stopColor="#16a34a" stopOpacity={0.05} />
             </linearGradient>
-            <linearGradient id="confidenceGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00e5a3" stopOpacity={0.12} />
-              <stop offset="100%" stopColor="#00e5a3" stopOpacity={0.02} />
+            {/* Forecast area fill */}
+            <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#16a34a" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#16a34a" stopOpacity={0.04} />
+            </linearGradient>
+            {/* Actual area fill */}
+            <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#0284c7" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#0284c7" stopOpacity={0.04} />
             </linearGradient>
           </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" />
-          
-          <XAxis 
-            dataKey="timeLabel" 
-            stroke="#64748b" 
-            tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'var(--font-mono)' }}
-            tickLine={{ stroke: '#334155' }}
+          <CartesianGrid strokeDasharray="0" stroke="#e8ecf0" vertical={false} />
+
+          <XAxis
+            dataKey="timeLabel"
+            stroke="transparent"
+            tick={{ fill: '#9ca3af', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+            axisLine={false}
+            tickLine={false}
+            interval={2}
           />
-          <YAxis 
-            stroke="#64748b" 
-            tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'var(--font-mono)' }}
-            tickLine={{ stroke: '#334155' }}
-            tickFormatter={(val) => `${(val / 1000).toFixed(1)}k`}
-            unit=" MW"
-            domain={['auto', 'auto']}
+
+          <YAxis
+            stroke="transparent"
+            tick={{ fill: '#9ca3af', fontSize: 11, fontFamily: 'var(--font-mono)' }}
+            tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+            axisLine={false}
+            tickLine={false}
           />
 
           <Tooltip content={<CustomTooltip />} />
-          <Legend 
-            verticalAlign="top" 
-            height={36}
+
+          <Legend
+            wrapperStyle={LEGEND_STYLE}
             iconType="circle"
-            wrapperStyle={{ fontSize: '0.8rem', paddingBottom: 10 }}
+            iconSize={8}
           />
 
-          {/* Confidence interval band */}
+          {/* Confidence band */}
           {showConfidence && (
             <Area
               type="monotone"
               dataKey="confidenceHigh"
-              name="Confidence Range (±1 RMSE)"
-              stroke="none"
-              fill="url(#confidenceGrad)"
-              isAnimationActive={false}
+              name="Upper Bound (+1 RMSE)"
+              stroke="rgba(22, 163, 74, 0.45)"
+              strokeDasharray="4 3"
+              strokeWidth={1.5}
+              fill="url(#confGrad)"
+              legendType="none"
+            />
+          )}
+          {showConfidence && (
+            <Area
+              type="monotone"
+              dataKey="confidenceLow"
+              name="Lower Bound (-1 RMSE)"
+              stroke="rgba(22, 163, 74, 0.45)"
+              strokeDasharray="4 3"
+              strokeWidth={1.5}
+              fill="transparent"
+              legendType="none"
             />
           )}
 
-          {/* Primary Forecast Area / Line */}
-          <Area
-            type="monotone"
-            dataKey="forecast"
-            name="Wind Forecast (WINDFOR)"
-            stroke="#00e5a3"
-            strokeWidth={2.5}
-            fill="url(#forecastAreaGrad)"
-            activeDot={{ r: 6, fill: '#00e5a3', stroke: '#090d16', strokeWidth: 2 }}
-          />
-
-          {/* Actuals Line */}
+          {/* Actual generation — area under */}
           {showActuals && (
-            <Line
+            <Area
               type="monotone"
               dataKey="actual"
               name="Actual Generation (FUELHH)"
-              stroke="#00d2ff"
-              strokeWidth={2}
-              dot={{ r: 2.5, fill: '#00d2ff' }}
-              activeDot={{ r: 6, fill: '#00d2ff', stroke: '#090d16', strokeWidth: 2 }}
+              stroke="#0284c7"
+              strokeWidth={2.5}
+              fill="url(#actualGrad)"
+              dot={false}
+              activeDot={{ r: 5, fill: '#0284c7', stroke: '#ffffff', strokeWidth: 2 }}
             />
           )}
 
+          {/* Forecast — area under, darker stroke */}
+          <Area
+            type="monotone"
+            dataKey="forecast"
+            name="Forecast Generation (WINDFOR)"
+            stroke="#16a34a"
+            strokeWidth={3}
+            fill="url(#forecastGrad)"
+            dot={false}
+            activeDot={{ r: 5, fill: '#16a34a', stroke: '#ffffff', strokeWidth: 2 }}
+          />
+
           {selectedHour && (
-            <ReferenceLine 
-              x={selectedHour.slice(11, 16)} 
-              stroke="#f59e0b" 
-              strokeDasharray="4 4"
-              label={{ value: 'Selected', fill: '#f59e0b', fontSize: 10, position: 'top' }}
+            <ReferenceLine
+              x={selectedHour.slice(11, 16)}
+              stroke="#6b7280"
+              strokeDasharray="3 2"
+              strokeWidth={1.5}
+              label={{ value: '⬤ Inspecting', fill: '#374151', fontSize: 10, fontWeight: 600, position: 'insideTopRight', dx: 4 }}
             />
           )}
         </ComposedChart>
