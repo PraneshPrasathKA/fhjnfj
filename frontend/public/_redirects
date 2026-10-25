@@ -1,0 +1,2 @@
+/api/*  https://uk-wind-intelligence-api.onrender.com/api/:splat  200
+/*      /index.html                                               200
