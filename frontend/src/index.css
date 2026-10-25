@@ -1635,3 +1635,19 @@ body {
   display: flex;
   gap: 14px;
 }
+
+/* Hide Netlify drawer & preview watermark badge */
+[data-netlify-drawer],
+#netlify-badge,
+.netlify-badge,
+iframe#netlify-drawer-iframe,
+div[class*="netlify"],
+netlify-drawer,
+div:has(> a[href*="netlify.com"]),
+a[href*="netlify.com"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
