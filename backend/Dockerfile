@@ -17,5 +17,6 @@ COPY . .
 # Expose port (standard FastAPI port)
 EXPOSE 8000
 
-# Run uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run uvicorn (uses Heroku dynamic $PORT if set, otherwise defaults to 8000)
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+
